@@ -18,7 +18,8 @@
 /// FS is inspired in the ext2 FS.
 
 
-use std::{fs::File, io::{self}, os::unix::prelude::FileExt};
+use std::{fs, fs::File, io::{self}, os::unix::prelude::FileExt};
+use std::os::unix::fs::PermissionsExt;
 
 const BLOCKSIZE: u64 = 1024;
 
@@ -29,6 +30,8 @@ pub struct FileSystem {
 impl FileSystem {
     pub fn new(path: &str) -> Result<Self, io::Error> {
         let v_device = File::create(path)?;
+        v_device.set_permissions(fs::Permissions::from_mode(0o666))
+            .expect("TODO: panic message");
 
         Ok (Self { v_device })
     }
