@@ -17,29 +17,30 @@
 /// As you can see, this is a bitmap and inode array implementation, since this
 /// FS is inspired in the ext2 FS.
 
-
 use std::{fs, fs::File, io::{self}, os::unix::prelude::FileExt};
 use std::os::unix::fs::PermissionsExt;
 
-const BLOCKSIZE: u64 = 1024;
+pub const BLOCKSIZE: usize = 1024;
 
-pub struct FileSystem {
-    v_device: File
+pub struct BlockManager {
+    v_device: File,
+    size: usize
 }
 
-impl FileSystem {
+impl BlockManager {
     pub fn new(path: &str) -> Result<Self, io::Error> {
         let v_device = File::create(path)?;
         v_device.set_permissions(fs::Permissions::from_mode(0o666))
             .expect("TODO: panic message");
 
-        Ok (Self { v_device })
+        Ok (Self { v_device, size: 0 })
     }
 
     pub fn write_block(&mut self, block_number: u64, buffer: &[u8; BLOCKSIZE as usize]) -> Result<usize, io::Error> {
         let offset = BLOCKSIZE * block_number;
 
-        let bytes_written = self.v_device.write_at(buffer, offset)?;
+        let bytes_written = self.v_device.write_at(buffer, offset as u64)?;
+        self.size += bytes_written;
 
         Ok(bytes_written)
     }
@@ -47,9 +48,18 @@ impl FileSystem {
     pub fn read_block(&self, block_number: u64, buffer: &mut [u8; BLOCKSIZE as usize]) -> Result<(), io::Error> {
         let offset = BLOCKSIZE * block_number;
 
-        self.v_device.read_exact_at(buffer, offset)?;
+        self.v_device.read_exact_at(buffer, offset as u64)?;
 
         Ok(())
     }
 
 }
+
+// TODO: develop tests for this module
+//#[cfg(test)]
+//mod tests {
+//    use std::fs;
+//    use std::path::Path;
+//    use crate::blocks::BlockManager;
+//    use fs::remove_file;
+//}

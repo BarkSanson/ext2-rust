@@ -1,6 +1,6 @@
 use std::{env, process, io};
 
-use ext2_rust::blocks::{ FileSystem, };
+use ext2_rust::blocks::{BlockManager, };
 
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
@@ -20,7 +20,7 @@ fn main() -> Result<(), io::Error> {
         }
     };
 
-    let mut system = FileSystem::new(path)?;
+    let mut system = BlockManager::new(path)?;
 
     let buff = [0x00; 1024];
 
