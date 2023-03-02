@@ -17,30 +17,35 @@
 /// As you can see, this is a bitmap and inode array implementation, since this
 /// FS is inspired in the ext2 FS.
 
-use std::{fs, fs::File, io::{self}};
+use std::{fs, fs::File, io::{self}, path};
+use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::fs::PermissionsExt;
 
-pub const BLOCKSIZE: usize = 1024;
+pub const BLOCKSIZE: usize = 2048;
 
 pub struct BlockManager<T: Read + Write + Seek> {
     v_device: T,
-    size: usize
 }
 
 impl BlockManager<File> {
     pub fn new(path: &str) -> Result<Self, io::Error> {
-        let v_device = File::create(path)?;
+        let v_device: File;
+        if path::Path::new(path).exists() {
+            v_device = OpenOptions::new().write(true).read(true).open(path)?;
+        } else {
+            v_device = File::create(path)?;
+        }
         v_device.set_permissions(fs::Permissions::from_mode(0o666))
             .expect("TODO: panic message");
 
-        Ok(Self { v_device, size: 0 })
+        Ok(Self { v_device })
     }
 }
 
 impl<T: Read + Write + Seek> BlockManager<T> {
     fn from_in_memory(buffer: T) -> Self {
-        Self { v_device: buffer, size: 0}
+        Self { v_device: buffer }
     }
 
     pub fn write_block(&mut self, block_number: usize, buffer: &[u8; BLOCKSIZE]) -> Result<usize, io::Error> {
@@ -49,7 +54,6 @@ impl<T: Read + Write + Seek> BlockManager<T> {
         self.v_device.seek(SeekFrom::Start(offset as u64))?;
 
         let bytes_written = self.v_device.write(buffer)?;
-        self.size += bytes_written;
 
         self.v_device.rewind()?;
 

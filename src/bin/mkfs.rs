@@ -25,7 +25,7 @@ fn main() -> Result<(), io::Error> {
     let buff = [0x00; 1024];
 
     for i in 0..number_of_blocks {
-        system.write_block(i as u64, &buff)?;
+        system.write_block(i, &buff)?;
     }
 
     Ok(())
