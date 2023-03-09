@@ -21,6 +21,7 @@ use std::{fs, fs::File, io::{self}, path};
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::fs::PermissionsExt;
+use crate::util::bytes;
 
 pub const BLOCKSIZE: usize = 2048;
 
@@ -48,12 +49,14 @@ impl<T: Read + Write + Seek> BlockManager<T> {
         Self { v_device: buffer }
     }
 
-    pub fn write_block(&mut self, block_number: usize, buffer: &[u8; BLOCKSIZE]) -> Result<usize, io::Error> {
+    pub fn write_block<E>(&mut self, block_number: usize, buffer: &E) -> Result<usize, io::Error> {
         let offset = BLOCKSIZE * block_number;
+
+        let raw = bytes::to_u8_slice(buffer);
 
         self.v_device.seek(SeekFrom::Start(offset as u64))?;
 
-        let bytes_written = self.v_device.write(buffer)?;
+        let bytes_written = self.v_device.write(raw)?;
 
         self.v_device.rewind()?;
 

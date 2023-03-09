@@ -1,7 +1,5 @@
-use std::mem;
-use std::mem::{size_of, size_of_val};
+use std::mem::size_of;
 use std::time::SystemTime;
-use crate::blocks;
 use crate::blocks::BLOCKSIZE;
 
 /// Size in bytes of an inode
